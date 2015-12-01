@@ -17,6 +17,7 @@ using Microsoft.Framework.DependencyInjection;
 using Microsoft.Framework.Logging;
 using TeamMVC6.Models;
 using TeamMVC6.Services;
+using TeamMVC6.Migrations.Seed;
 
 namespace TeamMVC6
 {
@@ -49,6 +50,8 @@ namespace TeamMVC6
             services.AddEntityFramework()
                 .AddSqlServer()
                 .AddDbContext<ApplicationDbContext>(options =>
+                    options.UseSqlServer(Configuration["Data:DefaultConnection:ConnectionString"]))
+                .AddDbContext<OptionsContext>(options =>
                     options.UseSqlServer(Configuration["Data:DefaultConnection:ConnectionString"]));
 
             // Add Identity services to the services container.
@@ -81,10 +84,11 @@ namespace TeamMVC6
             // Register application services.
             services.AddTransient<IEmailSender, AuthMessageSender>();
             services.AddTransient<ISmsSender, AuthMessageSender>();
+            services.AddTransient<TestIdentity>();
         }
 
         // Configure is called after ConfigureServices is called.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public async void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, TestIdentity testIdentity)
         {
             loggerFactory.MinimumLevel = LogLevel.Information;
             loggerFactory.AddConsole();
@@ -129,6 +133,19 @@ namespace TeamMVC6
                 // Uncomment the following line to add a route for porting Web API 2 controllers.
                 // routes.MapWebApiRoute("DefaultApi", "api/{controller}/{id?}");
             });
+
+            using (var serviceScope = app.ApplicationServices
+               .GetRequiredService<IServiceScopeFactory>()
+               .CreateScope())
+            {
+
+                var context = serviceScope.ServiceProvider.GetService<OptionsContext>();
+
+                SeedData.Initialize(context);
+
+                var test = serviceScope.ServiceProvider.GetService<ApplicationDbContext>();
+                await testIdentity.InitializeDataAsync();
+            }
         }
     }
 }
