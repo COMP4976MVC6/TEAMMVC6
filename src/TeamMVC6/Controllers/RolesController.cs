@@ -128,7 +128,7 @@ namespace TeamMVC6.Controllers
             var test = await _userManager.GetUsersInRoleAsync(role.Name);
             if (test.Count > 0)
             {
-                ViewBag.InUse = "Please remove users from this role before deleting it. Goodnight sweet prince.";
+                ViewBag.InUse = "Please remove users from this role before deleting it.";
                 return View(role);
             }
 
@@ -144,8 +144,8 @@ namespace TeamMVC6.Controllers
 
             if (await _userManager.IsInRoleAsync(user, role.Name))
             {
-                ApplicationUser testicle = _userManager.Users.Where(c => c.Id == userId).First();
-                await _userManager.RemoveFromRoleAsync(testicle, role.Name);
+                ApplicationUser user2 = _userManager.Users.Where(c => c.Id == userId).First();
+                await _userManager.RemoveFromRoleAsync(user2, role.Name);
                 await _context.SaveChangesAsync();
             }
 
